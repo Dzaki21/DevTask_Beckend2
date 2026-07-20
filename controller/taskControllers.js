@@ -1,9 +1,9 @@
 const Task = require('../models/task');
 
 //Get Task
-const getTasks = async(req, res) => {
-    try{
-        const { search } = req.query;
+const getTasks = async (req, res) => {
+    try {
+        const { search, status, page = 1, limit = 5 } = req.query;
 
         let filter = {};
 
@@ -14,74 +14,92 @@ const getTasks = async(req, res) => {
                     $options: 'i'
                 }
             };
+
+
         }
- 
-        const tasks = await Task.find(filter).sort({ createdAt:-1});
-        res.status(200).json(tasks);
+        if (status && status !== "All") {
+            filter.status = status;
+        }
+        const currentPage = Number(page);
+        const perPage = Number(limit);
+        const skip = (currentPage - 1) * perPage;
+        const totalTasks = await Task.countDocuments(filter);
+
+        const tasks = await Task.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(perPage);
+        ;
+        res.status(200).json({
+            tasks, 
+            currentPage,
+            totalPages: Math.ceil(totalTasks / perPage),
+            totalTasks,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message})
+        res.status(500).json({ message: error.message })
     }
 
 };
 
 //Post Task
 const postTasks = async (req, res) => {
-    const {title, description, category, status} = req.body;
+    const { title, description, category, status } = req.body;
 
     if (!title) {
-        return res.status(400).json({ message: 'Judul tidak boleh kosong'});
+        return res.status(400).json({ message: 'Judul tidak boleh kosong' });
     } if (!description) {
-        return res.status(400).json({message: 'Isi deskripsi terlebih dahulu'});
-    } if(!category) {
-        return res.status(400).json({message: 'Pilih kategori terlebih dahulu'});
-    } if(!status) {
-        return res.status(400).json({message: 'Pilih status terlebih dahulu'});
+        return res.status(400).json({ message: 'Isi deskripsi terlebih dahulu' });
+    } if (!category) {
+        return res.status(400).json({ message: 'Pilih kategori terlebih dahulu' });
+    } if (!status) {
+        return res.status(400).json({ message: 'Pilih status terlebih dahulu' });
     }
-    try{
-        const task = await Task.create({title, description, category, status});
+    try {
+        const task = await Task.create({ title, description, category, status });
         res.status(201).json(task);
-    }catch(error) {
-        res.status(400).json({message:error.message})
+    } catch (error) {
+        res.status(400).json({ message: error.message })
     }
 };
 
 //Put/Update Task
 const putTasks = async (req, res) => {
-    try{
+    try {
         const updatedTask = await Task.findByIdAndUpdate(
             req.params.id,
-            req.body, 
-            {new: true, runValidators: true}
+            req.body,
+            { new: true, runValidators: true }
         );
 
-        if(!updatedTask) {
-            return res.status(404).json({ message: 'Tugas tidak ditemukan'});
+        if (!updatedTask) {
+            return res.status(404).json({ message: 'Tugas tidak ditemukan' });
         }
 
         res.status(200).json(updatedTask);
     } catch (error) {
-        res.status(400).json({ message: error.message});
+        res.status(400).json({ message: error.message });
     }
 };
 
 
 //Delete Task
 const deleteTask = async (req, res) => {
-    try{
+    try {
         const task = await Task.findByIdAndDelete(req.params.id);
 
         if (!task) {
-            return res.status(404).json({message: 'Tugas tidak ditemukan'});
+            return res.status(404).json({ message: 'Tugas tidak ditemukan' });
         }
 
-        res.status(200).json({message: 'Tugas Berhasil dihapus'});
+        res.status(200).json({ message: 'Tugas Berhasil dihapus' });
     } catch (error) {
-        res.status(500).json({message: error.message})
+        res.status(500).json({ message: error.message })
     }
 }
 
 
-module.exports ={
+module.exports = {
     getTasks,
     postTasks,
     putTasks,

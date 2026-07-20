@@ -22,7 +22,7 @@ const taskSchema = mongoose.Schema({
         default: 'Pending'
     }
 }, {
-        timestamp: true
+        timestamps: true
     
 });
 
