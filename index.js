@@ -8,11 +8,12 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 const connectDB = require('./config/db');
 const taskRoutes = require('./routes/taskRoutes');
+const authRoutes = require('./routes/authRoutes')
 
 app.use(cors());
 app.use(express.json());
 app.use('/api/task', taskRoutes)
-
+app.use('/api/auth', authRoutes)
 mongoose.connect(process.env.MONGO_URI);
 app.listen(PORT, () =>{
     console.log(`Server siap di port ${PORT}`);

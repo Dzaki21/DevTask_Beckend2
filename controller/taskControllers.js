@@ -23,7 +23,22 @@ const getTasks = async (req, res) => {
         const currentPage = Number(page);
         const perPage = Number(limit);
         const skip = (currentPage - 1) * perPage;
-        const totalTasks = await Task.countDocuments(filter);
+
+        const totalTasks = await Task.countDocuments();
+
+        const pendingTasks = await Task.countDocuments({
+            status: "Pending",
+        });
+
+        const progressTasks = await Task.countDocuments({
+            status: "In Progress",
+        });
+
+        const completedTasks = await Task.countDocuments({
+            status: "Completed"
+        })
+
+        const filteredTasks = await Task.countDocuments(filter);
 
         const tasks = await Task.find(filter)
         .sort({ createdAt: -1 })
@@ -33,8 +48,12 @@ const getTasks = async (req, res) => {
         res.status(200).json({
             tasks, 
             currentPage,
-            totalPages: Math.ceil(totalTasks / perPage),
+            totalPages: Math.ceil(filteredTasks / perPage),
+
             totalTasks,
+            pendingTasks,
+            progressTasks,
+            completedTasks
         });
     } catch (error) {
         res.status(500).json({ message: error.message })
